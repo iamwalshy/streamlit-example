@@ -1,38 +1,61 @@
-from collections import namedtuple
-import altair as alt
-import math
-import pandas as pd
 import streamlit as st
 
-"""
-# Welcome to Streamlit!
+# Create a dictionary to store our projects
+projects = {}
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:
+# Define a function to create a new project
+def create_project(name, description):
+    project = {
+        'name': name,
+        'description': description,
+        'tasks': []
+    }
+    projects[name] = project
 
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+# Define a function to create a new task
+def create_task(project, name, description):
+    task = {
+        'name': name,
+        'description': description,
+        'completed': False
+    }
+    projects[project]['tasks'].append(task)
 
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
+# Define a function to mark a task as complete
+def complete_task(project, task):
+    for t in projects[project]['tasks']:
+        if t['name'] == task:
+            t['completed'] = True
+            break
 
+# Create a Streamlit sidebar to allow users to create and view projects
+st.sidebar.title('Projects')
 
-with st.echo(code_location='below'):
-    total_points = st.slider("Number of points in spiral", 1, 5000, 2000)
-    num_turns = st.slider("Number of turns in spiral", 1, 100, 9)
+# Add a button to create a new project
+if st.sidebar.button('Create Project'):
+    name = st.sidebar.text_input('Name')
+    description = st.sidebar.text_input('Description')
+    create_project(name, description)
 
-    Point = namedtuple('Point', 'x y')
-    data = []
+# Add a dropdown menu to select a project
+selected_project = st.sidebar.selectbox('Select a project', list(projects.keys()))
 
-    points_per_turn = total_points / num_turns
-
-    for curr_point_num in range(total_points):
-        curr_turn, i = divmod(curr_point_num, points_per_turn)
-        angle = (curr_turn + 1) * 2 * math.pi * i / points_per_turn
-        radius = curr_point_num / total_points
-        x = radius * math.cos(angle)
-        y = radius * math.sin(angle)
-        data.append(Point(x, y))
-
-    st.altair_chart(alt.Chart(pd.DataFrame(data), height=500, width=500)
-        .mark_circle(color='#0068c9', opacity=0.5)
-        .encode(x='x:Q', y='y:Q'))
+# Display the tasks for the selected project
+if selected_project:
+    st.title(selected_project)
+    st.write(projects[selected_project]['description'])
+    st.write('Tasks:')
+    for task in projects[selected_project]['tasks']:
+        if task['completed']:
+            st.write(f'[x] {task["name"]}')
+        else:
+            st.write(f'[ ] {task["name"]}')
+    # Add a button to create a new task
+    if st.button('Create Task'):
+        task_name = st.text_input('Name')
+        task_description = st.text_input('Description')
+        create_task(selected_project, task_name, task_description)
+    # Add a button to mark a task as complete
+    if st.button('Complete Task'):
+        task = st.selectbox('Select a task', [t['name'] for t in projects[selected_project]['tasks']])
+        complete_task(selected_project, task)
